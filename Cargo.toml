@@ -1,0 +1,19 @@
+[package]
+name = "load"
+version = "0.1.0"
+edition = "2024"
+authors = [
+    "Zhang Yanpo <drdr.xp@gmail.com>",
+]
+categories = ["development-tools", "development-tools::profiling"]
+description = "Load generator for benchmark tasks with Zipf distribution"
+documentation = "https://docs.rs/load"
+homepage = "https://github.com/drmingdrmer/load"
+keywords = ["benchmark", "load-generator", "performance", "zipf", "testing"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/drmingdrmer/load"
+
+[features]
+
+[dependencies]
+rand = "0.8"
