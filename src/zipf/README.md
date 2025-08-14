@@ -218,6 +218,20 @@ let most_accessed = hit_counts.iter().max_by_key(|&(_, count)| count);
 assert_eq!(most_accessed, Some((&1, &38)));
 ```
 
+## Performance Benchmarks
+
+Benchmark results for Zipf distribution operations:
+
+```
+running 6 tests
+test bench_zipf_array_access   ... bench:          16.59 ns/iter (+/- 0.65)
+test bench_zipf_indices_access ... bench:          15.76 ns/iter (+/- 0.22)
+test bench_zipf_iter           ... bench:          15.33 ns/iter (+/- 0.32)
+test bench_zipf_sample_s_1     ... bench:           6.73 ns/iter (+/- 0.19)
+test bench_zipf_sample_s_1_07  ... bench:           7.50 ns/iter (+/- 0.24)
+test bench_zipf_sample_s_2     ... bench:           7.55 ns/iter (+/- 0.70)
+```
+
 ## Parameters Guide
 
 - **Range [a, b]**: Defines the output range. For array indices, use `[1, array_length+1]`
