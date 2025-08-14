@@ -1,5 +1,10 @@
 # load
 
+[![Crates.io](https://img.shields.io/crates/v/load.svg)](https://crates.io/crates/load)
+[![docs.rs](https://docs.rs/load/badge.svg)](https://docs.rs/load)
+![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue)
+![Crates.io](https://img.shields.io/crates/d/load.svg)
+
 Load generator for benchmark tasks with [Zipf distribution](https://en.wikipedia.org/wiki/Zipf%27s_law).
 
 Zipf distribution models real-world access patterns where a small number of items account for the majority of requests (hot data). This is common in web caches, database queries, and file system access patterns.
