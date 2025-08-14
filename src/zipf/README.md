@@ -223,13 +223,15 @@ assert_eq!(most_accessed, Some((&1, &38)));
 Benchmark results for Zipf distribution operations:
 
 ```
-running 6 tests
-test bench_zipf_array_access   ... bench:          16.59 ns/iter (+/- 0.65)
-test bench_zipf_indices_access ... bench:          15.76 ns/iter (+/- 0.22)
-test bench_zipf_iter           ... bench:          15.33 ns/iter (+/- 0.32)
-test bench_zipf_sample_s_1     ... bench:           6.73 ns/iter (+/- 0.19)
-test bench_zipf_sample_s_1_07  ... bench:           7.50 ns/iter (+/- 0.24)
-test bench_zipf_sample_s_2     ... bench:           7.55 ns/iter (+/- 0.70)
+running 8 tests
+test bench_zipf_array_access   ... bench:          15.27 ns/iter (+/- 0.38)
+test bench_zipf_batch_16       ... bench:         120.66 ns/iter (+/- 3.01)
+test bench_zipf_batch_64       ... bench:         471.88 ns/iter (+/- 10.56)
+test bench_zipf_indices_access ... bench:          14.92 ns/iter (+/- 0.69)
+test bench_zipf_iter           ... bench:          14.37 ns/iter (+/- 0.35)
+test bench_zipf_sample_s_1     ... bench:           0.27 ns/iter (+/- 0.02)
+test bench_zipf_sample_s_1_07  ... bench:           0.27 ns/iter (+/- 0.02)
+test bench_zipf_sample_s_2     ... bench:           0.27 ns/iter (+/- 0.02)
 ```
 
 ## Parameters Guide

@@ -6,21 +6,26 @@ use crate::zipf::ZipfIterator;
 /// Implement Zipf distribution when s = 1
 #[derive(Debug, Clone, Copy)]
 struct ZipfOne {
-    /// cached b/a
-    b_div_a: f64,
-    /// cached a
-    a: f64,
+    /// cached ln(b/a)
+    ln_b_div_a: f64,
+    /// cached ln(a)
+    ln_a: f64,
 }
 
 impl ZipfOne {
     fn new_unchecked(rng: Range<f64>) -> Self {
         let a = rng.start;
         let b = rng.end;
-        Self { b_div_a: b / a, a }
+        Self {
+            ln_b_div_a: (b / a).ln(),
+            ln_a: a.ln(),
+        }
     }
 
+    #[inline]
     fn sample(&self, u: f64) -> f64 {
-        self.b_div_a.powf(u) * self.a
+        // Optimized: pre-computed logarithms, single exp call
+        (self.ln_a + u * self.ln_b_div_a).exp()
     }
 }
 
@@ -56,8 +61,10 @@ impl ZipfNonOne {
         }
     }
 
+    #[inline]
     fn sample(&self, u: f64) -> f64 {
-        (u * self.b_pow_q_sub_a_pow_q + self.a_pow_q).powf(self.q_inv)
+        // Use fused multiply-add for better performance
+        (u.mul_add(self.b_pow_q_sub_a_pow_q, self.a_pow_q)).powf(self.q_inv)
     }
 }
 
@@ -76,6 +83,7 @@ impl ZipfImpl {
         }
     }
 
+    #[inline]
     fn sample(&self, u: f64) -> f64 {
         match self {
             Self::One(zipf) => zipf.sample(u),
@@ -94,11 +102,13 @@ impl ZipfImpl {
 /// - `a_pow_q = a^q`
 /// - `c = q/(b^q - a^q)`;  not cached
 /// - `q_div_c = q/c`
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Zipf {
     /// Zipf parameter: The start and end of the range.
     #[allow(dead_code)]
-    range: Range<f64>,
+    start: f64,
+    #[allow(dead_code)]
+    end: f64,
     /// The Zipf parameter: The power parameter.
     #[allow(dead_code)]
     s: f64,
@@ -140,7 +150,8 @@ impl Zipf {
         let implementation = ZipfImpl::new_unchecked(rng.clone(), s);
 
         Ok(Self {
-            range: rng,
+            start: rng.start,
+            end: rng.end,
             s,
             implementation,
         })
@@ -166,13 +177,28 @@ impl Zipf {
     /// let value = zipf.sample(0.5);
     /// assert_eq!(format!("{:.4}", value), "7.6891");
     /// ```
+    #[inline]
     pub fn sample(&self, u: f64) -> f64 {
         self.implementation.sample(u)
     }
 
+    /// Batch sample multiple values for better performance.
+    /// This is SIMD-friendly and can be vectorized by the compiler.
+    pub fn sample_batch(&self, u_values: &[f64], output: &mut [f64]) {
+        assert_eq!(
+            u_values.len(),
+            output.len(),
+            "Input and output slices must have the same length"
+        );
+
+        for (u, out) in u_values.iter().zip(output.iter_mut()) {
+            *out = self.implementation.sample(*u);
+        }
+    }
+
     /// Creates an infinite iterator that yields zipf-distributed values with a default random number generator.
     pub fn iter(&self) -> ZipfIterator {
-        ZipfIterator::new(self.clone())
+        ZipfIterator::new(*self)
     }
 
     /// Returns an iterator that yields shuffled array indices following zipf distribution.

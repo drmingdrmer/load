@@ -69,6 +69,7 @@ impl ZipfIterator {
 impl Iterator for ZipfIterator {
     type Item = f64;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let u = self.rng.r#gen::<f64>();
         Some(self.zipf.sample(u))
