@@ -89,8 +89,8 @@ mod tests {
         let zipf = Zipf::new(1.0..10.0, 1.5).unwrap();
 
         // Test that same seed produces same sequence
-        let iter1 = ZipfIterator::with_seed(zipf.clone(), 42);
-        let iter2 = ZipfIterator::with_seed(zipf.clone(), 42);
+        let iter1 = ZipfIterator::with_seed(zipf, 42);
+        let iter2 = ZipfIterator::with_seed(zipf, 42);
 
         let seq1: Vec<f64> = iter1.take(10).collect();
         let seq2: Vec<f64> = iter2.take(10).collect();
@@ -101,7 +101,7 @@ mod tests {
     #[test]
     fn test_zipf_iterator_different_rngs() {
         let zipf = Zipf::new(1.0..5.0, 1.2).unwrap();
-        let mut iter = ZipfIterator::with_seed(zipf.clone(), 123);
+        let mut iter = ZipfIterator::with_seed(zipf, 123);
 
         let seq1: Vec<f64> = (&mut iter).take(5).collect();
 
