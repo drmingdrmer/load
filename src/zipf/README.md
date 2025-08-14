@@ -209,7 +209,7 @@ let mut hit_counts = HashMap::new();
 
 for index in Zipf::indices_access(1..11, 1.2).unwrap().take(100) {
     *hit_counts.entry(index).or_insert(0) += 1;
-    
+
     // Process each access immediately (e.g., cache lookup, database query)
     // This approach uses constant memory regardless of workload size
 }
@@ -222,7 +222,7 @@ assert_eq!(most_accessed, Some((&1, &38)));
 
 Benchmark results for Zipf distribution operations:
 
-```
+```text
 running 8 tests
 test bench_zipf_array_access   ... bench:          15.27 ns/iter (+/- 0.38)
 test bench_zipf_batch_16       ... bench:         120.66 ns/iter (+/- 3.01)
