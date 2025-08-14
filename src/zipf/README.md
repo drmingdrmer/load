@@ -88,7 +88,7 @@ We need to find the inverse of its cumulative distribution function (CDF).
 
 **Step 1: Compute the CDF**
 
-$$F(t) = \int_a^t C x^{-s} \, dx = C \frac{1}{1-s} \cdot (t^{1-s} - a^{1-s})$$
+$$F(t) = \int_a^t C x^{-s} dx = C \frac{1}{1-s} \cdot (t^{1-s} - a^{1-s})$$
 
 Let $q = 1-s$, then:
 
@@ -98,7 +98,7 @@ $$F(t) = \frac{C}{q}(t^q - a^q)$$
 
 For the total probability to equal 1:
 
-$$\int_a^b f(x) \, dx = 1$$
+$$\int_a^b f(x) dx = 1$$
 
 This gives us:
 
@@ -127,12 +127,12 @@ The standard CDF formula $F(t) = \frac{C}{q}(t^q - a^q)$ becomes $\frac{C}{0}(t^
 Starting with the PDF: $f(x) = C \cdot x^{-1} = \frac{C}{x}$
 
 The CDF becomes:
-$$F(t) = \int_a^t \frac{C}{x} \, dx = C(\ln t - \ln a) = C \ln\left(\frac{t}{a}\right)$$
+$$F(t) = \int_a^t \frac{C}{x} dx = C(\ln t - \ln a) = C \ln\left(\frac{t}{a}\right)$$
 
 **Normalization:**
 
 For the total probability to equal 1:
-$$\int_a^b \frac{C}{x} \, dx = C(\ln b - \ln a) = 1$$
+$$\int_a^b \frac{C}{x} dx = C(\ln b - \ln a) = 1$$
 
 Therefore: $C = \frac{1}{\ln b - \ln a}$
 
