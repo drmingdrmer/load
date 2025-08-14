@@ -17,3 +17,6 @@ repository = "https://github.com/drmingdrmer/load"
 
 [dependencies]
 rand = "0.8"
+
+[package.metadata.docs.rs]
+rustdoc-args = [ "--html-in-header", "katex-dollar.html" ]
