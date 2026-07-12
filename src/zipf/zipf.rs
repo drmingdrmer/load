@@ -3,16 +3,16 @@ use std::ops::Range;
 use crate::zipf::ZipfError;
 use crate::zipf::ZipfIterator;
 
-/// Implement Zipf distribution when s = 1
+/// Zipf distribution with unit exponent (s = 1)
 #[derive(Debug, Clone, Copy)]
-struct ZipfOne {
+struct ZipfS1 {
     /// cached ln(b/a)
     ln_b_div_a: f64,
     /// cached ln(a)
     ln_a: f64,
 }
 
-impl ZipfOne {
+impl ZipfS1 {
     fn new_unchecked(rng: Range<f64>) -> Self {
         let a = rng.start;
         let b = rng.end;
@@ -29,22 +29,20 @@ impl ZipfOne {
     }
 }
 
-/// Implement Zipf distribution when s != 1
+/// Zipf distribution with arbitrary exponent (s != 1)
+///
+/// Let `q = 1-s`, then we cache:
+/// - `q_inv = 1/q`
+/// - `a_pow_q = a^q`
+/// - `b_pow_q_sub_a_pow_q = b^q - a^q`
 #[derive(Debug, Clone, Copy)]
-struct ZipfNonOne {
-    // Cache: `q = 1-s`; not cached.
-    /// Cache: `q_inv = 1/q`
+struct ZipfGeneral {
     q_inv: f64,
-    /// Cache: `a_pow_q = a^q`
     a_pow_q: f64,
-
-    // Cache: `b_pow_q = b^q`
-    // b_pow_q: f64,
-    /// Cache: `b^q - a^q`
     b_pow_q_sub_a_pow_q: f64,
 }
 
-impl ZipfNonOne {
+impl ZipfGeneral {
     pub fn new_unchecked(rng: Range<f64>, s: f64) -> Self {
         let a = rng.start;
         let b = rng.end;
@@ -70,24 +68,24 @@ impl ZipfNonOne {
 
 #[derive(Debug, Clone, Copy)]
 enum ZipfImpl {
-    One(ZipfOne),
-    NonOne(ZipfNonOne),
+    S1(ZipfS1),
+    General(ZipfGeneral),
 }
 
 impl ZipfImpl {
     fn new_unchecked(rng: Range<f64>, s: f64) -> Self {
         if s == 1.0 {
-            Self::One(ZipfOne::new_unchecked(rng))
+            Self::S1(ZipfS1::new_unchecked(rng))
         } else {
-            Self::NonOne(ZipfNonOne::new_unchecked(rng, s))
+            Self::General(ZipfGeneral::new_unchecked(rng, s))
         }
     }
 
     #[inline]
     fn sample(&self, u: f64) -> f64 {
         match self {
-            Self::One(zipf) => zipf.sample(u),
-            Self::NonOne(zipf) => zipf.sample(u),
+            Self::S1(zipf) => zipf.sample(u),
+            Self::General(zipf) => zipf.sample(u),
         }
     }
 }
@@ -97,11 +95,10 @@ impl ZipfImpl {
 /// The Zipf struct caches intermediate variables for efficient generation
 /// of zipf distributed values.
 ///
-/// - `q = 1-s`; not cached.
+/// Let `q = 1-s`, then we cache:
 /// - `q_inv = 1/q`
 /// - `a_pow_q = a^q`
-/// - `c = q/(b^q - a^q)`;  not cached
-/// - `q_div_c = q/c`
+/// - `b_pow_q_sub_a_pow_q = b^q - a^q`
 #[derive(Debug, Clone, Copy)]
 pub struct Zipf {
     /// Zipf parameter: The start and end of the range.
@@ -184,16 +181,19 @@ impl Zipf {
 
     /// Batch sample multiple values for better performance.
     /// This is SIMD-friendly and can be vectorized by the compiler.
-    pub fn sample_batch(&self, u_values: &[f64], output: &mut [f64]) {
-        assert_eq!(
-            u_values.len(),
-            output.len(),
-            "Input and output slices must have the same length"
-        );
+    pub fn sample_batch(&self, u_values: &[f64], output: &mut [f64]) -> Result<(), ZipfError> {
+        if u_values.len() != output.len() {
+            return Err(ZipfError::MismatchedSliceLengths {
+                input: u_values.len(),
+                output: output.len(),
+            });
+        }
 
         for (u, out) in u_values.iter().zip(output.iter_mut()) {
             *out = self.implementation.sample(*u);
         }
+
+        Ok(())
     }
 
     /// Creates an infinite iterator that yields zipf-distributed values with a default random number generator.
@@ -251,6 +251,16 @@ mod tests {
 
     use crate::zipf::*;
 
+    fn collect_histogram<T>(iter: impl Iterator<Item = T>, n: usize) -> HashMap<T, usize>
+    where
+        T: std::hash::Hash + Eq,
+    {
+        iter.take(n).fold(HashMap::new(), |mut acc, x| {
+            *acc.entry(x).or_insert(0) += 1;
+            acc
+        })
+    }
+
     #[test]
     fn test_indices_access_iteration() {
         let iter = Zipf::indices_access(1..10, 0.7).unwrap();
@@ -267,11 +277,7 @@ mod tests {
     #[test]
     fn test_indices_access_count() {
         let iter = Zipf::indices_access(1..10, 0.8).unwrap();
-
-        let counts = iter.take(1000).fold(HashMap::new(), |mut acc, x| {
-            *acc.entry(x).or_insert(0) += 1;
-            acc
-        });
+        let counts = collect_histogram(iter, 1000);
 
         // got: {3: 112, 4: 114, 6: 73, 8: 66, 5: 88, 9: 61, 7: 81, 1: 236, 2: 169}
         assert_eq!(
@@ -293,11 +299,7 @@ mod tests {
     #[test]
     fn test_indices_access_count_s_eq_1() {
         let iter = Zipf::indices_access(1..10, 1.0).unwrap();
-
-        let counts = iter.take(1000).fold(HashMap::new(), |mut acc, x| {
-            *acc.entry(x).or_insert(0) += 1;
-            acc
-        });
+        let counts = collect_histogram(iter, 1000);
 
         // got: {3: 123, 1: 285, 2: 171, 5: 80, 8: 57, 9: 47, 6: 69, 4: 96, 7: 72}
         assert_eq!(
@@ -319,11 +321,7 @@ mod tests {
     #[test]
     fn test_array_access_count() {
         let iter = Zipf::array_access(3, vec!['a', 'b', 'c', 'd', 'e'], 0.8).unwrap();
-
-        let counts = iter.take(1000).fold(HashMap::new(), |mut acc, x| {
-            *acc.entry(x).or_insert(0) += 1;
-            acc
-        });
+        let counts = collect_histogram(iter, 1000);
 
         // got: {'b': 205, 'a': 261, 'e': 168, 'c': 200, 'd': 166}
         assert_eq!(

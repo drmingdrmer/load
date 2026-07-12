@@ -11,6 +11,8 @@ pub enum ZipfError {
     InvalidRangeEnd { start: f64, end: f64 },
     /// The array cannot be empty.
     EmptyArray,
+    /// Input and output slices must have the same length.
+    MismatchedSliceLengths { input: usize, output: usize },
 }
 
 impl fmt::Display for ZipfError {
@@ -27,6 +29,13 @@ impl fmt::Display for ZipfError {
             }
             ZipfError::EmptyArray => {
                 write!(f, "Array cannot be empty")
+            }
+            ZipfError::MismatchedSliceLengths { input, output } => {
+                write!(
+                    f,
+                    "Input and output slices must have same length, got: input={}, output={}",
+                    input, output
+                )
             }
         }
     }

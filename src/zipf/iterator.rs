@@ -4,6 +4,7 @@ use rand::SeedableRng;
 
 use crate::zipf::Zipf;
 
+/// Default seed for reproducible random number generation in tests and benchmarks.
 const DEFAULT_SEED: u64 = 666;
 
 /// Iterator that generates zipf-distributed values with configurable random seed.
